@@ -147,7 +147,11 @@ static TestResult *construct_test_result (RcvMsg *rmsg, int waserror)
   tr = tr_create();
 
   if (rmsg->msg != NULL || waserror) {
+#ifndef _WIN32
     tr->ctx = (cur_fork_status () == CK_FORK) ? rmsg->lastctx : rmsg->failctx;
+#else
+    tr->ctx = rmsg->failctx;
+#endif
     tr->msg = rmsg->msg;
     rmsg->msg = NULL;
     tr_set_loc_by_ctx (tr, tr->ctx, rmsg);
@@ -180,8 +184,12 @@ static void setup_pipe(void)
     if (send_file2 != 0)
       eprintf("Only one nesting of suite runs supported", __FILE__, __LINE__);
     send_file2 = tmpfile();
+	if (!send_file2)
+	  eprintf("Pipe setup failed: %d", __FILE__, __LINE__, errno);
   } else {
     send_file1 = tmpfile();
+	if (!send_file1)
+	  eprintf("Pipe setup failed: %d", __FILE__, __LINE__, errno);
   }
 }
 

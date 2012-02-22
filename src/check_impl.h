@@ -105,13 +105,17 @@ struct SRunner {
   const char *log_fname; /* name of log file */
   const char *xml_fname; /* name of xml output file */
   List *loglst; /* list of Log objects */
+#ifndef _WIN32
   enum fork_status fstat; /* controls if suites are forked or not
 			     NOTE: Don't use this value directly,
 			     instead use srunner_fork_status */
+#endif
 };
 
 
+#ifndef _WIN32
 void set_fork_status(enum fork_status fstat);
 enum fork_status cur_fork_status (void);
+#endif
 
 #endif /* CHECK_IMPL_H */

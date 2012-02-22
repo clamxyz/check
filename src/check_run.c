@@ -43,12 +43,13 @@ enum rinfo {
   CK_R_FAIL_FIXTURE
 };
 
+#ifndef _WIN32
 enum tf_type {
   CK_FORK_TEST,
   CK_NOFORK_TEST,
   CK_NOFORK_FIXTURE
 };
-
+#endif
 
 /* all functions are defined in the same order they are declared.
    functions that depend on forking are gathered all together.
@@ -108,7 +109,9 @@ static void CK_ATTRIBUTE_UNUSED sig_handler(int sig_nr)
 
 static void srunner_run_init (SRunner *sr, enum print_output print_mode)
 {
+#ifndef _WIN32
   set_fork_status(srunner_fork_status(sr));
+#endif
   setup_messaging();
   srunner_init_logging (sr, print_mode);
   log_srunner_start (sr);
@@ -119,7 +122,9 @@ static void srunner_run_end (SRunner *sr, enum print_output CK_ATTRIBUTE_UNUSED 
   log_srunner_end (sr);
   srunner_end_logging (sr);
   teardown_messaging();
+#ifndef _WIN32
   set_fork_status(CK_FORK);  
+#endif
 }
 
 static void srunner_iterate_suites (SRunner *sr,
@@ -173,6 +178,7 @@ static void srunner_iterate_tcase_tfuns (SRunner *sr, TCase *tc)
     for (i = tfun->loop_start; i < tfun->loop_end; i++)
     {
       log_test_start (sr, tc, tfun);
+#ifndef _WIN32
       switch (srunner_fork_status(sr)) {
       case CK_FORK:
 #ifdef _POSIX_VERSION
@@ -182,11 +188,14 @@ static void srunner_iterate_tcase_tfuns (SRunner *sr, TCase *tc)
 #endif /* _POSIX_VERSION */
         break;
       case CK_NOFORK:
+#endif
         tr = tcase_run_tfun_nofork (sr, tc, tfun, i);
+#ifndef _WIN32
         break;
       default:
         eprintf("Bad fork status in SRunner", __FILE__, __LINE__);
       }
+#endif
 
       if ( NULL != tr ) {
         srunner_add_failure (sr, tr);
@@ -214,7 +223,9 @@ static int srunner_run_unchecked_setup (SRunner *sr, TCase *tc)
   Fixture *f;
   int rval = 1;
 
+#ifndef _WIN32
   set_fork_status(CK_NOFORK);
+#endif
 
   l = tc->unch_sflst;
 
@@ -238,7 +249,9 @@ static int srunner_run_unchecked_setup (SRunner *sr, TCase *tc)
     free(tr);
   } 
 
+#ifndef _WIN32
   set_fork_status(srunner_fork_status(sr));
+#endif
   return rval;
 }
 
@@ -247,28 +260,34 @@ static TestResult * tcase_run_checked_setup (SRunner *sr, TCase *tc)
   TestResult *tr = NULL;
   List *l;
   Fixture *f;
+#ifndef _WIN32
   enum fork_status fstat = srunner_fork_status(sr);
-
+#endif
   l = tc->ch_sflst;
+#ifndef _WIN32
   if (fstat == CK_FORK) {
     send_ctx_info(CK_CTX_SETUP);
   }
-
+#endif
   for (list_front(l); !list_at_end(l); list_advance(l)) {
     f = list_val(l);
 
+#ifndef _WIN32
     if (fstat == CK_NOFORK) {
+#endif
       send_ctx_info(CK_CTX_SETUP);
 
       if ( 0 == setjmp(error_jmp_buffer) ) {
         f->fun();
       }
+#ifndef _WIN32
     } else {
       f->fun();
     }
 
     /* Stop the setup and return the failure if nofork mode. */
     if (fstat == CK_NOFORK) {
+#endif
       tr = receive_result_info_nofork (tc->name, "checked_setup", 0);
       if (tr->rtype != CK_PASS) {
         break;
@@ -278,7 +297,9 @@ static TestResult * tcase_run_checked_setup (SRunner *sr, TCase *tc)
       free(tr->msg);
       free(tr);
       tr = NULL;
+#ifndef _WIN32
     }
+#endif
   }
 
   return tr;
@@ -518,6 +539,7 @@ static int waserror (int status, int signal_expected)
 }
 #endif /* _POSIX_VERSION */
 
+#ifndef _WIN32
 enum fork_status srunner_fork_status (SRunner *sr)
 {
   if (sr->fstat == CK_FORK_GETENV) {
@@ -542,6 +564,7 @@ void srunner_set_fork_status (SRunner *sr, enum fork_status fstat)
 {
   sr->fstat = fstat;
 }
+#endif
 
 void srunner_run_all (SRunner *sr, enum print_output print_mode)
 {
@@ -583,6 +606,7 @@ void srunner_run (SRunner *sr, const char *sname, const char *tcname, enum print
 #endif /* _POSIX_VERSION */
 }
 
+#ifndef _WIN32
 pid_t check_fork (void)
 {
 #ifdef _POSIX_VERSION
@@ -615,3 +639,4 @@ void check_waitpid_and_exit (pid_t pid CK_ATTRIBUTE_UNUSED)
   eprintf("This version does not support fork", __FILE__, __LINE__);
 #endif /* _POSIX_VERSION */
 }  
+#endif

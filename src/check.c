@@ -246,13 +246,17 @@ void _ck_assert_msg (int result, const char *file,
     vsnprintf(buf, BUFSIZ, msg, ap);
     va_end(ap);
     send_failure_info (buf);
+#ifndef _WIN32
     if (cur_fork_status() == CK_FORK) {
 #ifdef _POSIX_VERSION
       exit(1);
 #endif /* _POSIX_VERSION */
     } else {
+#endif
       longjmp(error_jmp_buffer, 1);
+#ifndef _WIN32
     }
+#endif
   }
 }
 
@@ -268,7 +272,9 @@ SRunner *srunner_create (Suite *s)
   sr->log_fname = NULL;
   sr->xml_fname = NULL;
   sr->loglst = NULL;
+#ifndef _WIN32
   sr->fstat = CK_FORK_GETENV;
+#endif
   return sr;
 }
 
@@ -409,8 +415,8 @@ const char *tr_tcname (TestResult *tr)
   return tr->tcname;
 }
 
+#ifndef _WIN32
 static int _fstat = CK_FORK;
-
 void set_fork_status (enum fork_status fstat)
 {
   if (fstat == CK_FORK || fstat == CK_NOFORK || fstat == CK_FORK_GETENV)
@@ -423,3 +429,4 @@ enum fork_status cur_fork_status (void)
 {
   return _fstat;
 }
+#endif
