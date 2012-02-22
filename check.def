@@ -1,18 +1,14 @@
-LIBRARY check-d
+LIBRARY check
 EXPORTS
  _ck_assert_msg
- _fail_unless
  _mark_point
  _tcase_add_test
- check_fork
- check_major_version;
- check_micro_version;
- check_minor_version;
- check_waitpid_and_exit
+ check_major_version
+ check_micro_version
+ check_minor_version
  srunner_add_suite
  srunner_create
  srunner_failures
- srunner_fork_status
  srunner_free
  srunner_has_log
  srunner_has_xml
@@ -23,7 +19,6 @@ EXPORTS
  srunner_results
  srunner_run
  srunner_run_all
- srunner_set_fork_status
  srunner_set_log
  srunner_set_xml
  srunner_xml_fname
